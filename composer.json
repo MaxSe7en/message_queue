@@ -1,0 +1,10 @@
+{
+    "name": "guzzlehttp/guzzle",
+    "description": "sss",
+    "autoload": {
+        "psr-4": {
+            "Guzzlehttp\\Guzzle\\": "src/"
+        }
+    },
+    "require": {}
+}
