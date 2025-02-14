@@ -1,4 +1,4 @@
 <?php
-require 'vendor/autoload.php';
-require 'src/Routes/router.php';
+require_once 'vendor/autoload.php';
+require_once 'src/Routes/router.php';
 

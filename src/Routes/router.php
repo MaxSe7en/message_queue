@@ -32,11 +32,16 @@ switch ($routeInfo[0]) {
         break;
 
     case Dispatcher::FOUND:
-        [$controller, $method] = $routeInfo[1];
+        $handler = $routeInfo[1];
         $vars = $routeInfo[2];
 
-        // Instantiate controller and call method
-        (new $controller())->$method(...$vars);
+        if (is_array($handler)) {// for this types of routes ['App\Controllers\UserController', 'show']
+            [$controller, $method] = $handler;
+            (new $controller())->$method(...array_values($vars));
+        } elseif (is_string($handler) && strpos($handler, '::') !== false) { // for this types of routes 'App\Controllers\MomoMsgController::addMessage'
+            [$controller, $method] = explode('::', $handler);
+            (new $controller())->$method(...array_values($vars));
+        }
         break;
     default: {
         http_response_code(403);

@@ -7,7 +7,7 @@ use PDOException;
 use Dotenv\Dotenv;
 
 class DatabaseConfig {
-    private ?PDO $conn = null;
+    private static ?PDO $conn = null;
 
     public function __construct() {
         // Load environment variables
@@ -15,7 +15,7 @@ class DatabaseConfig {
         $dotenv->load();
     }
 
-    public function connect(): ?PDO {
+    public static function connect(): ?PDO {
         try {
             $dsn = "mysql:host={$_ENV['DB_HOST']};dbname={$_ENV['DB_NAME']};charset=utf8mb4";
             $options = [
@@ -24,10 +24,15 @@ class DatabaseConfig {
                 PDO::ATTR_EMULATE_PREPARES => false
             ];
 
-            $this->conn = new PDO($dsn, $_ENV['DB_USER'], $_ENV['DB_PASS'], $options);
-            return $this->conn;
+            self::$conn = new PDO($dsn, $_ENV['DB_USER'], $_ENV['DB_PASS'], $options);
+            return self::$conn;
         } catch (PDOException $e) {
-            die("Database Connection Error: " . $e->getMessage());
+            exit("Database Connection Error: " . $e->getMessage());
         }
+    }
+
+    public static function close(): void
+    {
+        self::$pdo = null; // This explicitly closes the connection
     }
 }
