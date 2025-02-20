@@ -10,4 +10,8 @@ final class MomoMsgController extends BaseController
         $success = $momoMsgModel->insertMessage($requestData['momo_sms']);
         echo json_encode(['message' => 'Create a new item' . json_encode($success)]);
     }
+
+    public function viewMessage(){
+        echo json_encode(['message' => 'Create a new item' . json_encode("new messages loading")]);
+    }
 }

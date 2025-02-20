@@ -19,7 +19,7 @@ if (false !== $pos = strpos($uri, '?')) {
 
 // Dispatch the request
 $routeInfo = $dispatcher->dispatch($httpMethod, $uri);
-
+print_r($routeInfo);
 switch ($routeInfo[0]) {
     case Dispatcher::NOT_FOUND:
         http_response_code(404);
