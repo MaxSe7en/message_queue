@@ -85,6 +85,39 @@ $consumer = new KafkaConsumer("momo_transactions");
 $consumer->listen();
 ```
 
+# 📌 Kafka Consumer Configuration Explained
+
+## 🔹 Key Configuration Options
+
+| Config Key                 | Description |
+|----------------------------|-------------|
+| `metadata.broker.list`      | Specifies the Kafka broker address (`localhost:9092` or another broker). This tells the consumer where to find Kafka. |
+| `group.id`                 | A unique ID for the consumer group. Consumers with the same group ID will share the load of processing messages from partitions. |
+| `auto.offset.reset`        | Determines where the consumer should start reading if no previous offset is stored: |
+|                            | - `earliest`: Start reading from the beginning of the topic. |
+|                            | - `latest`: Start reading from the newest messages. |
+|                            | - `none`: Fail if no offset is stored. |
+| `enable.auto.commit`       | If set to `true`, Kafka automatically saves the last read offset. If `false`, you must manually commit offsets. |
+| `fetch.min.bytes`          | The minimum amount of data the consumer will receive in one fetch request. Helps optimize performance. |
+| `max.poll.records`         | The maximum number of messages a consumer will fetch in a single poll request. |
+| `session.timeout.ms`       | The time (in milliseconds) the broker waits before assuming a consumer is dead if it doesn't send heartbeats. |
+| `heartbeat.interval.ms`    | The frequency at which the consumer sends heartbeats to the broker to indicate it's still alive. |
+
+---
+
+## 🛠️ Example Configuration in PHP
+
+```php
+$conf = new RdKafka\Conf();
+$conf->set('metadata.broker.list', 'localhost:9092'); // Set Kafka broker
+$conf->set('group.id', 'my_consumer_group'); // Set consumer group ID
+$conf->set('auto.offset.reset', 'earliest'); // Read from beginning if no offset exists
+$conf->set('enable.auto.commit', 'false'); // Manually commit offsets
+$conf->set('session.timeout.ms', '60000'); // Set session timeout
+$conf->set('heartbeat.interval.ms', '5000'); // Send heartbeats every 5s
+
+$consumer = new RdKafka\Consumer($conf);
+
 ---
 
 ## 📝 Author
