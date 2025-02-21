@@ -34,7 +34,7 @@ class KafkaConsumer
 
         while (true) {
             $message = $topic->consume(0, 1000); // Partition 0, timeout 1000ms
-
+            print_r("message ========> ".json_encode($message));
             switch ($message->err) {
                 case RD_KAFKA_RESP_ERR_NO_ERROR:
                     echo "Message received: " . $message->payload . "\n";
