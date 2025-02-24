@@ -1,0 +1,1 @@
+docker inspect -f '{{.State.Status}}' cae15c7509d5 // check container status
