@@ -28,6 +28,14 @@ final class MomoMsgController extends BaseController
     }
 
     public function viewMessage(){
-        echo json_encode(['message' => 'Create a new item' . json_encode("new messages loading")]);
+        http_response_code(200);
+        echo json_encode(['status' => 200, 'message' => 'Create a new item' . json_encode("new messages loading")]);
+
+    }
+
+    public function viewMessageError(){
+        http_response_code(200);
+        echo json_encode(['status' => 409, 'message' => 'Already exists']);
+
     }
 }
