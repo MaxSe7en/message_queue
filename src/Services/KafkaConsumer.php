@@ -16,7 +16,7 @@ class KafkaConsumer
     {
         // Configure Kafka Consumer
         $conf = new Conf();
-        $conf->set('metadata.broker.list', $_ENV['KAFKA_BROKER']); // Set Kafka broker
+        $conf->set('metadata.broker.list', "172.18.0.4:9092"); // Set Kafka broker
         $conf->set('group.id', 'my_consumer_group'); // Set consumer group
         $conf->set('auto.offset.reset', 'earliest'); // Read from the beginning if no offset exists
 
@@ -34,6 +34,10 @@ class KafkaConsumer
 
         while (true) {
             $message = $topic->consume(0, 1000); // Partition 0, timeout 1000ms
+            if ($message === null) {
+                echo "Received null message, waiting...\n";
+                continue;
+            }
             print_r("message ========> ".json_encode($message));
             switch ($message->err) {
                 case RD_KAFKA_RESP_ERR_NO_ERROR:

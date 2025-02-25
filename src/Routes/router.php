@@ -5,7 +5,6 @@ use function FastRoute\simpleDispatcher;
 
 // Load routes
 $routes = require __DIR__ . '/web.php';
-
 // Create dispatcher
 $dispatcher = simpleDispatcher($routes);
 

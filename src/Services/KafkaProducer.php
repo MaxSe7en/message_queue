@@ -12,9 +12,9 @@ class KafkaProducer
     public function __construct(string $topicName)
     {
         $conf = new Conf();
-        $conf->set('metadata.broker.list', $_ENV['KAFKA_BROKER']); // Set broker
+        $conf->set('metadata.broker.list', '172.18.0.4:9092'); // Set broker
         $this->producer = new Producer($conf);
-        $this->producer->addBrokers($_ENV['KAFKA_BROKER']);
+        $this->producer->addBrokers('172.18.0.4:9092');
         $this->topicName = $topicName;
     }
 

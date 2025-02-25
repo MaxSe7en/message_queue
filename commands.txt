@@ -1,1 +1,9 @@
-docker inspect -f '{{.State.Status}}' cae15c7509d5 // check container status
+docker inspect -f '{{.State.Status}}' cae15c7509d5 // check container status whether running or stopped
+
+sudo docker compose exec web php consumer.php // running consumer
+docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' image service // check network IP running
+sudo docker compose up -d kafka //starting kafka
+sudo docker ps --format "{{.Names}}" //list all docker container names
+sudo docker exec -it message_queue-db-1 mysql -u root -p // run mysql command
+
+sudo docker exec -it message_queue-web-1 bash // running message queue web interactive directory
