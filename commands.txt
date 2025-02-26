@@ -7,3 +7,15 @@ sudo docker ps --format "{{.Names}}" //list all docker container names
 sudo docker exec -it message_queue-db-1 mysql -u root -p // run mysql command
 
 sudo docker exec -it message_queue-web-1 bash // running message queue web interactive directory
+
+when face 500 error on server
+sudo docker exec -it 6269c09b5156 a2enmod rewrite
+sudo docker exec -it 6269c09b5156 service apache2 restart
+
+
+service apache2 restart //restart apache2 in docker php r webserver
+
+
+how to start web socket server
+go into var/html/project_name
+and then php filename.php

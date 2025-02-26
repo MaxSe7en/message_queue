@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Real-time Transaction Monitor</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f7fb;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        h1 {
+            color: #333;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+        .status-bar {
+            background-color: #eee;
+            padding: 10px 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        .connected {
+            background-color: #2ecc71;
+        }
+        .disconnected {
+            background-color: #e74c3c;
+        }
+        .connecting {
+            background-color: #f39c12;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: white;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        th {
+            background-color: #3498db;
+            color: white;
+            text-align: left;
+            padding: 12px 15px;
+        }
+        td {
+            padding: 10px 15px;
+            border-bottom: 1px solid #eee;
+        }
+        tr:last-child td {
+            border-bottom: none;
+        }
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        tr.highlight {
+            animation: highlight 2s ease-out;
+        }
+        @keyframes highlight {
+            0% { background-color: #fffacd; }
+            100% { background-color: transparent; }
+        }
+        .amount {
+            text-align: right;
+            font-weight: bold;
+        }
+        .amount.expense {
+            color: #e74c3c;
+        }
+        .amount.income {
+            color: #2ecc71;
+        }
+        .date-time {
+            color: #7f8c8d;
+            font-size: 0.9em;
+        }
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #7f8c8d;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Real-time Transaction Monitor</h1>
+        
+        <div class="status-bar">
+            <div>
+                <span class="status-indicator disconnected" id="status-indicator"></span>
+                <span id="connection-status">Disconnected</span>
+            </div>
+            <div>
+                <span id="message-count">0</span> transactions received
+            </div>
+        </div>
+        
+        <table id="transactions-table">
+            <thead>
+                <tr>
+                    <th>Transaction ID</th>
+                    <th>Reference</th>
+                    <th>Sender</th>
+                    <th>Message</th>
+                    <th>Amount</th>
+                    <th>Type</th>
+                    <th>Date & Time</th>
+                </tr>
+            </thead>
+            <tbody id="transactions-body">
+                <tr>
+                    <td colspan="7" class="empty-state">Waiting for transactions...</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        // DOM elements
+        const statusIndicator = document.getElementById('status-indicator');
+        const connectionStatus = document.getElementById('connection-status');
+        const messageCount = document.getElementById('message-count');
+        const transactionsBody = document.getElementById('transactions-body');
+        
+        // Track connection state and message count
+        let isFirstMessage = true;
+        let messageCounter = 0;
+        
+        // Update connection status UI
+        function updateConnectionStatus(status) {
+            connectionStatus.textContent = status;
+            statusIndicator.className = 'status-indicator ' + 
+                (status === 'Connected' ? 'connected' : 
+                 status === 'Connecting...' ? 'connecting' : 'disconnected');
+        }
+        
+        // Format date and time
+        function formatDateTime(dateTimeStr) {
+            const date = new Date(dateTimeStr);
+            return date.toLocaleString();
+        }
+        
+        // Add a new transaction to the table
+        function addTransaction(transaction) {
+            // Remove empty state message if this is the first message
+            if (isFirstMessage) {
+                transactionsBody.innerHTML = '';
+                isFirstMessage = false;
+            }
+            
+            // Create new row
+            const row = document.createElement('tr');
+            row.className = 'highlight';
+            
+            // Populate row with transaction data
+            row.innerHTML = `
+                <td>${transaction.transactionId}</td>
+                <td>${transaction.ref}</td>
+                <td>${transaction.sender}</td>
+                <td>${transaction.message}</td>
+                <td class="amount ${transaction.type}">${transaction.amount}</td>
+                <td>${transaction.type}</td>
+                <td class="date-time">${formatDateTime(transaction.datetime)}</td>
+            `;
+            
+            // Add row to the beginning of the table
+            transactionsBody.insertBefore(row, transactionsBody.firstChild);
+            
+            // Update message counter
+            messageCounter++;
+            messageCount.textContent = messageCounter;
+        }
+        
+        // Initialize WebSocket connection
+        function initializeWebSocket() {
+            updateConnectionStatus('Connecting...');
+            
+            // Replace with your actual WebSocket server address
+            // const socket = new WebSocket('ws://192.168.1.94:8081');
+            const socket = new WebSocket('ws://' + window.location.hostname + ':8081');
+            // Connection opened
+            socket.addEventListener('open', (event) => {
+                updateConnectionStatus('Connected');
+                console.log('Connected to WebSocket server');
+            });
+            
+            // Listen for messages
+            socket.addEventListener('message', (event) => {
+                try {
+                    const data = JSON.parse(event.data);
+                    console.log('Message from server:', data);
+                    
+                    if (data.message) {
+                        addTransaction(data.message);
+                    }
+                } catch (error) {
+                    console.error('Error parsing message:', error);
+                }
+            });
+            
+            // Connection closed
+            socket.addEventListener('close', (event) => {
+                updateConnectionStatus('Disconnected');
+                console.log('Disconnected from WebSocket server');
+                
+                // Try to reconnect after a delay
+                setTimeout(initializeWebSocket, 5000);
+            });
+            
+            // Connection error
+            socket.addEventListener('error', (event) => {
+                updateConnectionStatus('Connection Error');
+                console.error('WebSocket error:', event);
+            });
+            
+            // Keep connection alive with periodic pings
+            const pingInterval = setInterval(() => {
+                if (socket.readyState === WebSocket.OPEN) {
+                    socket.send(JSON.stringify({ type: 'ping' }));
+                } else if (socket.readyState === WebSocket.CLOSED || 
+                          socket.readyState === WebSocket.CLOSING) {
+                    clearInterval(pingInterval);
+                }
+            }, 30000); // Every 30 seconds
+            
+            return socket;
+        }
+        
+        // Start WebSocket connection when page loads
+        let socket = initializeWebSocket();
+        
+        // Add test data button (for demonstration purposes)
+        // Comment out this section in production
+        document.addEventListener('DOMContentLoaded', () => {
+            const testData = {
+                message: {
+                    ref: "REF12347",
+                    transactionId: "TXN00488",
+                    mref: "MREF003",
+                    message: "Rent payment for January",
+                    sender: "Alice Johnson",
+                    amount: "1200.00",
+                    type: "expense",
+                    datetime: "2024-01-17T09:15:00Z"
+                },
+                timestamp: 1740528521
+            };
+            
+            // Add button to test UI with sample data
+            const container = document.querySelector('.container');
+            const testButton = document.createElement('button');
+            testButton.textContent = 'Add Test Transaction';
+            testButton.style.marginTop = '20px';
+            testButton.style.padding = '8px 16px';
+            testButton.addEventListener('click', () => {
+                // Clone data and modify to make it look different each time
+                const clonedData = JSON.parse(JSON.stringify(testData));
+                clonedData.message.transactionId = 'TXN' + Math.floor(Math.random() * 10000).toString().padStart(5, '0');
+                clonedData.message.datetime = new Date().toISOString();
+                clonedData.message.amount = (Math.random() * 2000).toFixed(2);
+                clonedData.message.type = Math.random() > 0.5 ? 'expense' : 'income';
+                addTransaction(clonedData.message);
+            });
+            container.appendChild(testButton);
+        });
+    </script>
+</body>
+</html>
+

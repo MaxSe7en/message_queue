@@ -7,6 +7,15 @@ services:
       - 84:80
     depends_on:
       - db
+  websocket:
+    build: .
+    ports:
+      - "8081:8081"
+    command: php /var/www/html/webstarter.php
+    volumes:
+      - .:/var/www/html
+    depends_on:
+      - kafka
   db:
     image: mysql
     volumes:
