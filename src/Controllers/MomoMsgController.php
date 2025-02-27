@@ -6,10 +6,15 @@ use App\Models\MomoMsgModel;
 
 final class MomoMsgController extends BaseController
 {
+        
+    private $momoMsgModel = null;
+
+    public function __construct(){
+        $this->momoMsgModel = new MomoMsgModel();
+    }
     public function addMessage()
     {
         $momo_sms = $this->getRequestData();
-        $momoMsgModel = new MomoMsgModel();
         if (
             $this->validateMessageField($momo_sms)['isMissingFields']
         ) {
@@ -19,13 +24,13 @@ final class MomoMsgController extends BaseController
                 'message' => 'Missing required fields: ' . implode(', ', $this->validateMessageField($momo_sms)['missingFields'])
             ]);
             return;
-        } else if ($momoMsgModel->transactionExists($momo_sms['transactionId'])) {
+        } else if ($this->momoMsgModel->transactionExists($momo_sms['transactionId'])) {
             http_response_code(200);
             echo json_encode(['status' => 409, 'message' => 'Message already exists']);
             return;
         }
 
-        $success = $momoMsgModel->insertMessage2($momo_sms);
+        $success = $this->momoMsgModel->insertMessage2($momo_sms);
 
         if ($success) {
             try {
@@ -45,6 +50,12 @@ final class MomoMsgController extends BaseController
             echo json_encode(['status' => 200, 'message' => 'Failed to insert message into DB']);
             //logger here
         }
+    }
+
+    public function updateMessageStatus(string $transactionId){
+        $this->momoMsgModel->updateMessageToSent($transactionId);
+        http_response_code(200);
+        echo json_encode(['status' => 200, 'message' => 'Update a new item' . json_encode("message status updating")]);
     }
 
     public function viewMessage()

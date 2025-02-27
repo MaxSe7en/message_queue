@@ -9,3 +9,6 @@ CREATE TABLE transactions (
     type ENUM('income', 'expense') NOT NULL,
     datetime DATETIME DEFAULT CURRENT_TIMESTAMP
 );
+
+ALTER TABLE transactions
+ADD COLUMN sent_status ENUM('pending', 'sent', 'failed') NOT NULL DEFAULT 'pending';

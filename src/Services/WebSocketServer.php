@@ -1,6 +1,7 @@
 <?php
 namespace App\Services;
 
+use App\Controllers\MomoMsgController;
 use Ratchet\MessageComponentInterface;
 use Ratchet\ConnectionInterface;
 use Ratchet\Server\IoServer;
@@ -10,7 +11,7 @@ use Ratchet\WebSocket\WsServer;
 class WebSocketServer implements MessageComponentInterface
 {
     protected $clients;
-    
+    protected $channels;
     public function __construct()
     {
         $this->clients = new \SplObjectStorage;
@@ -21,6 +22,10 @@ class WebSocketServer implements MessageComponentInterface
     {
         // Store the new connection
         $this->clients->attach($conn);
+        LoggerService::logInfo("New WebSocket connection", [
+            'resourceId' => $conn->resourceId,
+            'ip' => $conn->remoteAddress,
+        ]);
         echo "New connection! ({$conn->resourceId})\n";
         echo "New connection! ({$conn->resourceId}) from IP: {$conn->remoteAddress}\n";
     
@@ -30,10 +35,71 @@ class WebSocketServer implements MessageComponentInterface
 
     public function onMessage(ConnectionInterface $from, $msg)
     {
-        // We're not expecting messages from clients in this implementation
-        // But you could implement client authentication or channel subscription here
+        $data = json_decode($msg, true);
         echo "Message received from {$from->resourceId}: {$msg}\n";
+        LoggerService::logInfo("Message received", [
+            'resourceId' => $from->resourceId,
+            'message' => $msg,
+        ]);
+return $data;
+        if (!$data || !isset($data['type'])) {
+            return;
+        }
+
+        switch ($data['type']) {
+            case 'subscribe':
+                $this->subscribeToChannel($from, $data['channel']);
+                break;
+
+            case 'message':
+                $this->sendMessageToChannel($data['channel'], $data['message'], $data['message_id']);
+                break;
+
+            case 'ack':
+                (new MomoMsgController())->updateMessageStatus($data['message_id']);
+                break;
+        }
     }
+
+    private function subscribeToChannel(ConnectionInterface $conn, string $channel)
+    {
+        if (!isset($this->channels[$channel])) {
+            $this->channels[$channel] = [];
+        }
+
+        $this->channels[$channel][$conn->resourceId] = $conn;
+        echo "Client {$conn->resourceId} subscribed to channel: $channel\n";
+    }
+
+    private function sendMessageToChannel(string $channel, string $message, string $messageId)
+    {
+        if (!isset($this->channels[$channel])) {
+            echo "No clients subscribed to channel: $channel\n";
+            return;
+        }
+
+        foreach ($this->channels[$channel] as $client) {
+            $client->send(json_encode([
+                'type' => 'message',
+                'message_id' => $messageId,
+                'message' => $message
+            ]));
+        }
+    }
+
+
+
+    private function removeClientFromChannels(ConnectionInterface $conn)
+    {
+        foreach ($this->channels as $channel => &$clients) {
+            unset($clients[$conn->resourceId]);
+            if (empty($clients)) {
+                unset($this->channels[$channel]);
+            }
+        }
+    }
+
+
 
     public function onClose(ConnectionInterface $conn)
     {
@@ -45,6 +111,7 @@ class WebSocketServer implements MessageComponentInterface
     public function onError(ConnectionInterface $conn, \Exception $e)
     {
         echo "An error has occurred: {$e->getMessage()}\n";
+        LoggerService::logError("WebSocket error", ['message' => $e->getMessage()]);
         $conn->close();
     }
 

@@ -4,6 +4,7 @@ namespace App\Models;
 use App\Config\DBConnector;
 use PDO;
 use PDOException;
+use App\Services\LoggerService;
 
 class MomoMsgModel
 {
@@ -18,6 +19,7 @@ class MomoMsgModel
             return DBConnector::insert($sql, [$momo_message]);
         } catch (PDOException $e) {
             error_log("DB Insert Error: " . $e->getMessage());
+            LoggerService::logError("WebSocket error", ['message' => $e->getMessage()]);
             return false;
         }
     }
@@ -43,6 +45,18 @@ class MomoMsgModel
         } catch (PDOException $e) {
             error_log("DB Insert Error: " . $e->getMessage());
             return false;
+        }
+    }
+
+
+    private function updateMessageStatus(string $transactionId)
+    {
+        try {
+            $sql = "UPDATE transactions SET status = received WHERE id = ?";
+            DBConnector::update($sql, [$transactionId]);//[':status' => $status, ':id' => $messageId]);
+            echo "Message $transactionId status updated to \n";
+        } catch (\Exception $e) {
+            echo "Error updating message status: {$e->getMessage()}\n";
         }
     }
 

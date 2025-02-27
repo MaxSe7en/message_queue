@@ -199,6 +199,7 @@
             socket.addEventListener('open', (event) => {
                 updateConnectionStatus('Connected');
                 console.log('Connected to WebSocket server');
+                socket.send(JSON.stringify({ type: "subscribe", channel: "desktop_user_123" }));
             });
             
             // Listen for messages
@@ -207,7 +208,7 @@
                     const data = JSON.parse(event.data);
                     console.log('Message from server:', data);
                     
-                    if (data.message) {
+                    if (data.type == 'message') {
                         addTransaction(data.message);
 
                         // Extract the transactionId and send it back to the server
