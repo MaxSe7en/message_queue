@@ -46,6 +46,16 @@ class MomoMsgModel
         }
     }
 
+    public static function updateMessageToSent(string $transactionId){
+        try {
+            $sql = "UPDATE transactions SET sent_status = 'sent' WHERE transactionId =?";
+            return DBConnector::update($sql, [$transactionId]);
+        } catch (PDOException $e) {
+            error_log("DB Update Error: " . $e->getMessage());
+            return false;
+        }
+    }
+
     public static function transactionExists(string $transactionId): bool {
         try {
             $sql = "SELECT COUNT(*) AS counts FROM transactions WHERE transactionId = ?";

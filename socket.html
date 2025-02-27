@@ -209,6 +209,17 @@
                     
                     if (data.message) {
                         addTransaction(data.message);
+
+                        // Extract the transactionId and send it back to the server
+                        const responseData = {
+                            type: 'acknowledgment',
+                            transactionId: data.message.transactionId
+                        };
+
+                        if (socket.readyState === WebSocket.OPEN) {
+                            socket.send(JSON.stringify(responseData));
+                            console.log('Sent acknowledgment:', responseData);
+                        }
                     }
                 } catch (error) {
                     console.error('Error parsing message:', error);
