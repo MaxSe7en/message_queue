@@ -43,35 +43,25 @@ class WebSocketServer implements MessageComponentInterface
             'resourceId' => $from->resourceId,
             'message' => $msg,
         ]);
-        print_r($data);
-        if ($data['type'] === 'subscribe' && isset($data['channel'])) {
-            $this->subscribeToChannel($from, $data['channel']);
-            
-            // Send acknowledgment back to the client
-            $from->send(json_encode([
-                "type" => "confirmation",
-                "channel" => $data['channel'],
-                "message" => "Subscription successful"
-            ]));
-        }
+
     
-        // if (!$data || !isset($data['type'])) {
-        //     return;
-        // }
+        if (!$data || !isset($data['type'])) {
+            return;
+        }
 
-        // switch ($data['type']) {
-        //     case 'subscribe':
-        //         $this->subscribeToChannel($from, $data['channel']);
-        //         break;
+        switch ($data['type']) {
+            case 'subscribe':
+                $this->subscribeToChannel($from, $data['channel']);
+                break;
 
-        //     case 'message':
-        //         $this->sendMessageToChannel($data['channel'], $data['message']);
-        //         break;
+            case 'message':
+                $this->sendMessageToChannel($data['channel'], $data['message']);
+                break;
 
-        //     case 'ack':
-        //         (new MomoMsgController())->updateMessageStatus($data['message_id']);
-        //         break;
-        // }
+            case 'ack':
+                (new MomoMsgController())->updateMessageStatus($data['message_id']);
+                break;
+        }
     }
 
     private function subscribeToChannel(ConnectionInterface $conn, string $channel)
