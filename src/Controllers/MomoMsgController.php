@@ -3,13 +3,16 @@
 namespace App\Controllers;
 
 use App\Models\MomoMsgModel;
+use Exception;
+use App\Services\LoggerService;
 
 final class MomoMsgController extends BaseController
 {
-        
+
     private $momoMsgModel = null;
 
-    public function __construct(){
+    public function __construct()
+    {
         $this->momoMsgModel = new MomoMsgModel();
     }
     public function addMessage()
@@ -42,7 +45,7 @@ final class MomoMsgController extends BaseController
                 http_response_code(200);
                 echo json_encode(['status' => 200, 'message' => 'Message added & sent to Kafka']);
             } catch (\Exception $e) {
-                echo json_encode(['status' => 200, 'message' => 'Kafka Error: ']);
+                echo json_encode(['status' => 200, 'message' => 'Kafka Error: ' . json_encode($e)]);
                 //logger here
             }
         } else {
@@ -52,10 +55,19 @@ final class MomoMsgController extends BaseController
         }
     }
 
-    public function updateMessageStatus(string $transactionId){
-        $this->momoMsgModel->updateMessageToSent($transactionId);
-        http_response_code(200);
-        echo json_encode(['status' => 200, 'message' => 'Update a new item' . json_encode("message status updating")]);
+    public function updateMessageStatus(string $transactionId)
+    {
+        try {
+
+            $res = $this->momoMsgModel->updateMessageToSent($transactionId);
+            LoggerService::logInfo("updateMessageStatus error", ['message' => $res]);
+
+            http_response_code(200);
+            echo json_encode(['status' => 200, 'message' => 'Update a new item' . json_encode("message status updating")]);
+        } catch (Exception $e) {
+            LoggerService::logError("updateMessageStatus error", ['message' => $e->getMessage()]);
+
+        }
     }
 
     public function viewMessage()

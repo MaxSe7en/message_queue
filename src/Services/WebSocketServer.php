@@ -41,7 +41,7 @@ class WebSocketServer implements MessageComponentInterface
         echo "Message received from {$from->resourceId}: {$msg}\n";
         LoggerService::logInfo("onMessage received from", [
             'resourceId' => $from->resourceId,
-            'message' => $msg,
+            'message' => $data['type'],// "message":{"type":"ack","transactionId":"TQWZF5EXGCS88QQ"}
         ]);
 
     
@@ -58,9 +58,14 @@ class WebSocketServer implements MessageComponentInterface
                 $this->sendMessageToChannel($data['channel'], $data['message']);
                 break;
 
-            case 'ack':
+            case 'ack':{
+                LoggerService::logInfo("ACKNOWLEGE", [
+                    'resourceId' => $from->resourceId,
+                    'message' => $data,// "message":{"type":"ack","transactionId":"TQWZF5EXGCS88QQ"}
+                ]);
                 (new MomoMsgController())->updateMessageStatus($data['message_id']);
                 break;
+            }
         }
     }
 

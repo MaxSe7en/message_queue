@@ -208,14 +208,15 @@
                 try {
                     const data = JSON.parse(event.data);
                     console.log('Message from server:', data);
+                    console.log('Message from server:', JSON.parse(data.message));
                     
-                    if (data.message) {
-                        addTransaction(data.message);
-
+                    if (JSON.parse(data.message)) {
+                        addTransaction(JSON.parse(data.message).message);
+                        const newMessage = JSON.parse(data.message).message;
                         // Extract the transactionId and send it back to the server
                         const responseData = {
                             type: 'ack',
-                            transactionId: data.message.transactionId
+                            transactionId: newMessage.transactionId
                         };
 
                         console.log(responseData, socket.readyState);
