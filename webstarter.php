@@ -72,6 +72,6 @@ Loop::addPeriodicTimer(0.1, function () use ($bridge) {
 });
 
 echo "Server started. WebSocket on port 8081, listening to Kafka topic 'momo_sms_topic'\n";
-LoggerService::logInfo("WebSocket started", ['message' => "Server started. WebSocket on port 8081, listening to Kafka topic 'momo_sms_topic'\n"]);
+// LoggerService::logInfo("WebSocket started", ['message' => "Server started. WebSocket on port 8081, listening to Kafka topic 'momo_sms_topic'\n"]);
 // Run the event loop (this is handled automatically now)
 Loop::run();

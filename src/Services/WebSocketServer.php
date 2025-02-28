@@ -16,6 +16,8 @@ class WebSocketServer implements MessageComponentInterface
     {
         $this->clients = new \SplObjectStorage;
         echo "WebSocket server started\n";
+        LoggerService::logInfo("WebSocket started", ['message' => "Server started. 000000"]);
+
     }
 
     public function onOpen(ConnectionInterface $conn)
@@ -37,28 +39,39 @@ class WebSocketServer implements MessageComponentInterface
     {
         $data = json_decode($msg, true);
         echo "Message received from {$from->resourceId}: {$msg}\n";
-        LoggerService::logInfo("Message received", [
+        LoggerService::logInfo("onMessage received from", [
             'resourceId' => $from->resourceId,
             'message' => $msg,
         ]);
-return $data;
-        if (!$data || !isset($data['type'])) {
-            return;
+        print_r($data);
+        if ($data['type'] === 'subscribe' && isset($data['channel'])) {
+            $this->subscribeToChannel($from, $data['channel']);
+            
+            // Send acknowledgment back to the client
+            $from->send(json_encode([
+                "type" => "confirmation",
+                "channel" => $data['channel'],
+                "message" => "Subscription successful"
+            ]));
         }
+    
+        // if (!$data || !isset($data['type'])) {
+        //     return;
+        // }
 
-        switch ($data['type']) {
-            case 'subscribe':
-                $this->subscribeToChannel($from, $data['channel']);
-                break;
+        // switch ($data['type']) {
+        //     case 'subscribe':
+        //         $this->subscribeToChannel($from, $data['channel']);
+        //         break;
 
-            case 'message':
-                $this->sendMessageToChannel($data['channel'], $data['message'], $data['message_id']);
-                break;
+        //     case 'message':
+        //         $this->sendMessageToChannel($data['channel'], $data['message']);
+        //         break;
 
-            case 'ack':
-                (new MomoMsgController())->updateMessageStatus($data['message_id']);
-                break;
-        }
+        //     case 'ack':
+        //         (new MomoMsgController())->updateMessageStatus($data['message_id']);
+        //         break;
+        // }
     }
 
     private function subscribeToChannel(ConnectionInterface $conn, string $channel)
@@ -69,9 +82,11 @@ return $data;
 
         $this->channels[$channel][$conn->resourceId] = $conn;
         echo "Client {$conn->resourceId} subscribed to channel: $channel\n";
+        LoggerService::logInfo("subscribeToChannel", ['message' => $channel]);
+
     }
 
-    private function sendMessageToChannel(string $channel, string $message, string $messageId)
+    public function sendMessageToChannel(string $channel, string $message)
     {
         if (!isset($this->channels[$channel])) {
             echo "No clients subscribed to channel: $channel\n";
@@ -80,8 +95,7 @@ return $data;
 
         foreach ($this->channels[$channel] as $client) {
             $client->send(json_encode([
-                'type' => 'message',
-                'message_id' => $messageId,
+                'type' => $channel,
                 'message' => $message
             ]));
         }
@@ -115,7 +129,7 @@ return $data;
         $conn->close();
     }
 
-    public function broadcast($message)
+    public function broadcast($channel, $message)
     {
         // Send message to all connected clients
         foreach ($this->clients as $client) {

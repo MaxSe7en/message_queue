@@ -199,7 +199,8 @@
             socket.addEventListener('open', (event) => {
                 updateConnectionStatus('Connected');
                 console.log('Connected to WebSocket server');
-                socket.send(JSON.stringify({ type: "subscribe", channel: "desktop_user_123" }));
+                console.log("Sending subscription request...");
+                socket.send(JSON.stringify({ type: "subscribe", channel: "momo_updates" }));
             });
             
             // Listen for messages
@@ -208,15 +209,16 @@
                     const data = JSON.parse(event.data);
                     console.log('Message from server:', data);
                     
-                    if (data.type == 'message') {
+                    if (data.message) {
                         addTransaction(data.message);
 
                         // Extract the transactionId and send it back to the server
                         const responseData = {
-                            type: 'acknowledgment',
+                            type: 'ack',
                             transactionId: data.message.transactionId
                         };
 
+                        console.log(responseData, socket.readyState);
                         if (socket.readyState === WebSocket.OPEN) {
                             socket.send(JSON.stringify(responseData));
                             console.log('Sent acknowledgment:', responseData);
@@ -226,7 +228,9 @@
                     console.error('Error parsing message:', error);
                 }
             });
-            
+            socket.onmessage = function(event) {
+                console.log("Message received from server:", event.data);
+            };
             // Connection closed
             socket.addEventListener('close', (event) => {
                 updateConnectionStatus('Disconnected');
